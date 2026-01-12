@@ -1,6 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import "dotenv/config";
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
+// import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client';
 
 /**
  * Global Prisma Client instance with singleton pattern
@@ -12,12 +13,14 @@ declare global {
 }
 
 // Create PostgreSQL connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL,
+// });
+
+const connectionString = `${process.env.DATABASE_URL}`
 
 // Create Prisma adapter
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaPg({ connectionString });
 
 // Initialize Prisma Client with adapter and logging configuration
 export const prisma = global.prisma || new PrismaClient({
