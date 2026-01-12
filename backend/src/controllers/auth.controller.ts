@@ -9,8 +9,21 @@ import { env } from '../config/env';
  */
 export class AuthController {
   /**
-   * Helper function to get cookie options
-   * Returns secure cookie configuration
+   * Helper function to get base cookie options
+   * Returns secure cookie configuration (without maxAge)
+   */
+  private getBaseCookieOptions() {
+    return {
+      httpOnly: true, // Ngăn JavaScript truy cập cookie (bảo vệ khỏi XSS)
+      secure: env.NODE_ENV === 'production', // Chỉ gửi qua HTTPS trong production
+      sameSite: 'lax' as const, // Ngăn CSRF attacks
+      path: '/', // Cookie available cho toàn bộ domain
+    };
+  }
+
+  /**
+   * Helper function to get cookie options for setting cookie
+   * Returns secure cookie configuration with maxAge
    */
   private getCookieOptions() {
     // Parse JWT_EXPIRES_IN (e.g., "7d", "24h") to milliseconds
@@ -26,11 +39,8 @@ export class AuthController {
     }
 
     return {
-      httpOnly: true, // Ngăn JavaScript truy cập cookie (bảo vệ khỏi XSS)
-      secure: env.NODE_ENV === 'production', // Chỉ gửi qua HTTPS trong production
-      sameSite: 'lax' as const, // Ngăn CSRF attacks
+      ...this.getBaseCookieOptions(),
       maxAge, // Thời gian sống của cookie (milliseconds)
-      path: '/', // Cookie available cho toàn bộ domain
     };
   }
 
@@ -70,14 +80,9 @@ export class AuthController {
    * POST /api/auth/logout
    * Logout user and invalidate token
    */
-  logout = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    // Clear the authentication cookie
-    res.clearCookie(env.COOKIE_NAME, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-    });
+  logout = asyncHandler(async (_: Request, res: Response): Promise<void> => {
+    // Clear the authentication cookie với options giống hệt lúc set cookie
+    res.clearCookie(env.COOKIE_NAME, this.getBaseCookieOptions());
 
     res.status(200).json({
       success: true,
