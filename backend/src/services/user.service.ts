@@ -1,7 +1,8 @@
 import { prisma } from '../config/database';
-import { CreateUserInput, UpdateUserInput } from '../types/user.types';
-import { NotFoundError, ConflictError } from '../types/errors';
+import { CreateUserInput, UpdateUserInput, UpdateUserProfileInput, ChangePasswordInput } from '../types/user.types';
+import { NotFoundError, ConflictError, ValidationError } from '../types/errors';
 import { User } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 /**
  * User Service Layer
@@ -22,9 +23,13 @@ export class UserService {
    * Get a single user by ID
    * @throws {NotFoundError} If user doesn't exist
    */
-  async getUserById(id: string): Promise<User> {
+  async getUserById(id: string): Promise<Omit<User, 'password' | 'deletedAt'>> {
     const user = await prisma.user.findUnique({
       where: { id },
+      omit: {
+        password: true,
+        deletedAt: true,
+      }
     });
 
     if (!user) {
@@ -32,6 +37,91 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async getCurrentUser(id: string): Promise<Omit<User, 'password' | 'deletedAt'>> {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      omit: {
+        password: true,
+        deletedAt: true,
+      }
+    });
+
+    if (!user) {
+      throw new NotFoundError(`User with ID ${id} not found`);
+    }
+
+    return user;
+  }
+
+  /**
+   * Update current user profile
+   * @param id - Current user ID
+   * @param data - Update data
+   * @returns Updated user
+   */
+  async updateProfile(id: string, data: UpdateUserProfileInput): Promise<Omit<User, 'password' | 'deletedAt'>> {
+      // Check if user exists
+      await this.getUserById(id);
+    const updateUser = await prisma.user.update({
+      where: { id },
+      data: {
+        name: data.name,
+      },
+      omit: {
+        password: true,
+        deletedAt: true,
+      }
+    });
+
+    return updateUser;
+  }
+
+  /**
+   * Change user password
+   * @param id - Current user ID
+   * @param data - Change password data (currentPassword, newPassword)
+   */
+  async changePassword(id: string, data: ChangePasswordInput): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, password: true }
+    });
+
+    if (!user) {
+      throw new NotFoundError(`User with ID ${id} not found`);
+    }
+
+    const { currentPassword, newPassword } = data;
+
+    // Verify current password is correct
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      throw new ValidationError('Current password is incorrect');
+    }
+
+    // Check if new password is same as current (optional)
+  const isSamePassword = await bcrypt.compare(newPassword, user.password);
+  if (isSamePassword) {
+    throw new ValidationError('New password must be different from current password');
+  }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id },
+      data: {
+        password: hashedNewPassword,
+      },
+    });
+
+    return;
+
+    // TODO: Implement logic
+    // - Verify user exists
+    // - Verify current password is correct
+    // - Hash new password
+    // - Update password in database
   }
 
   /**

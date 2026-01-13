@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { userService } from '../services/user.service';
 import { asyncHandler } from '../middlewares/errorHandler';
+import { ExtendedRequest } from '@/types/express';
 
 /**
  * User Controller Layer
@@ -33,6 +34,46 @@ export class UserController {
       success: true,
       message: 'User retrieved successfully',
       data: user,
+    });
+  });
+
+  /**
+   * GET /api/users/me
+   * Get current user
+   */
+  getCurrentUser = asyncHandler(async (req: ExtendedRequest, res: Response): Promise<void> => {
+    const user = await userService.getCurrentUser(req.user!.id);
+    res.status(200).json({
+      success: true,
+      message: 'User retrieved successfully',
+      data: user,
+    });
+  });
+
+  /**
+   * PUT /api/users/me
+   * Update current user profile
+   */
+  updateProfile = asyncHandler(async (req: ExtendedRequest, res: Response): Promise<void> => {
+    const user = await userService.updateProfile(req.user!.id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: user,
+    });
+  });
+
+  /**
+   * PUT /api/users/me/password
+   * Change current user password
+   */
+  changePassword = asyncHandler(async (req: ExtendedRequest, res: Response): Promise<void> => {
+    await userService.changePassword(req.user!.id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully',
     });
   });
 

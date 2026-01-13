@@ -1,4 +1,5 @@
 import express, { Application } from 'express';
+import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFoundHandler } from './middlewares/notFound';
 import routes from './routes';
@@ -8,6 +9,9 @@ import routes from './routes';
  */
 export const createApp = (): Application => {
   const app = express();
+
+  // Cookie parser middleware
+  app.use(cookieParser());
 
   // Body parser middleware
   app.use(express.json());

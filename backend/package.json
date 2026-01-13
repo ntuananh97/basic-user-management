@@ -4,7 +4,7 @@
   "description": "Backend Boilerplate with Express, TypeScript, Prisma, and Zod",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
@@ -42,6 +42,7 @@
     "@types/pg": "^8.16.0",
     "prisma": "^7.2.0",
     "ts-node-dev": "^2.0.0",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3"
   }
 }

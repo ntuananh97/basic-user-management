@@ -32,6 +32,19 @@ export const updateUserSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters').optional(),
   }),
 });
+export const updateUserProfileSchema = z.object({
+  body: z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
+  }),
+});
+
+// Schema for changing password
+export const changePasswordSchema = z.object({
+  body: z.object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+  }),
+});
 
 // Schema for getting/deleting a user by ID
 export const userIdSchema = z.object({
@@ -46,5 +59,7 @@ export const userIdSchema = z.object({
 export type CreateUserInput = z.infer<typeof createUserSchema>['body'];
 export type LoginUserInput = z.infer<typeof loginUserSchema>['body'];
 export type UpdateUserInput = z.infer<typeof updateUserSchema>['body'];
+export type UpdateUserProfileInput = z.infer<typeof updateUserProfileSchema>['body'];
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>['body'];
 export type UserIdParam = z.infer<typeof userIdSchema>['params'];
 
