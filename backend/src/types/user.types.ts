@@ -1,3 +1,4 @@
+import { User, UserStatus } from '@prisma/client';
 import { z } from 'zod';
 
 /**
@@ -46,6 +47,18 @@ export const changePasswordSchema = z.object({
   }),
 });
 
+// Schema for changing user status
+export const changeStatusSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid user ID format'),
+  }),
+  body: z.object({
+    status: z.nativeEnum(UserStatus, {
+      errorMap: () => ({ message: 'Status must be either active or blocked' }),
+    }),
+  }),
+});
+
 // Schema for getting/deleting a user by ID
 export const userIdSchema = z.object({
   params: z.object({
@@ -61,5 +74,25 @@ export type LoginUserInput = z.infer<typeof loginUserSchema>['body'];
 export type UpdateUserInput = z.infer<typeof updateUserSchema>['body'];
 export type UpdateUserProfileInput = z.infer<typeof updateUserProfileSchema>['body'];
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>['body'];
+export type ChangeStatusInput = z.infer<typeof changeStatusSchema>['body'];
 export type UserIdParam = z.infer<typeof userIdSchema>['params'];
+
+export interface IGetAllUsersParams {
+  page?: number;
+  limit?: number;
+  sort?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface IPaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface IUserWithoutPassword  extends Omit<User, 'password' > {}
 

@@ -1,5 +1,5 @@
 import { prisma } from '../config/database';
-import { CreateUserInput, UpdateUserInput, UpdateUserProfileInput, ChangePasswordInput } from '../types/user.types';
+import { CreateUserInput, UpdateUserInput, UpdateUserProfileInput, ChangePasswordInput, ChangeStatusInput, IGetAllUsersParams, IPaginatedResponse, IUserWithoutPassword } from '../types/user.types';
 import { NotFoundError, ConflictError, ValidationError } from '../types/errors';
 import { User } from '@prisma/client';
 import bcrypt from 'bcrypt';
@@ -10,13 +10,48 @@ import bcrypt from 'bcrypt';
  */
 export class UserService {
   /**
-   * Get all users from database
+   * Get all users from database with pagination and sorting
+   * @param params - Query parameters (validated by middleware)
    */
-  async getAllUsers(): Promise<User[]> {
-    const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return users;
+  async getAllUsers(params: Required<IGetAllUsersParams>): Promise<IPaginatedResponse<IUserWithoutPassword>> {
+    const { page, limit, sort, sortOrder } = params;
+
+    // Calculate skip for pagination
+    const skip = (page - 1) * limit;
+
+    // Build orderBy object dynamically
+    const orderBy: Record<string, 'asc' | 'desc'> = {
+      [sort]: sortOrder,
+    };
+
+    // Get total count and users in parallel
+    const [total, users] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.findMany({
+        where: {
+          deletedAt: null,
+        },
+        skip,
+        take: limit,
+        orderBy,
+        omit: {
+          password: true,
+        }
+      }),
+    ]);
+
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    };
   }
 
   /**
@@ -116,12 +151,6 @@ export class UserService {
     });
 
     return;
-
-    // TODO: Implement logic
-    // - Verify user exists
-    // - Verify current password is correct
-    // - Hash new password
-    // - Update password in database
   }
 
   /**
@@ -138,11 +167,15 @@ export class UserService {
       throw new ConflictError(`User with email ${data.email} already exists`);
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
     // Create new user
     const user = await prisma.user.create({
       data: {
         email: data.email,
-        name: data.name,
+        password: hashedPassword,
+        // name: data.name,
       },
     });
 
@@ -176,6 +209,42 @@ export class UserService {
     });
 
     return user;
+  }
+
+  /**
+   * Change user status (active/blocked)
+   * @param id - User ID
+   * @param data - Status data
+   * @returns Updated user
+   * @throws {NotFoundError} If user doesn't exist
+   */
+  async changeStatus(id: string, data: ChangeStatusInput): Promise<IUserWithoutPassword> {
+    // Check if user exists
+    await this.getUserById(id);
+
+    // Update user status
+    const user = await prisma.user.update({
+      where: { id },
+      data: { status: data.status },
+      omit: {
+        password: true,
+      }
+    });
+
+    return user;
+  }
+
+  /**
+   * Soft delete a user by ID (set deletedAt timestamp)
+   * @param id - User ID
+   * @throws {NotFoundError} If user doesn't exist
+   */
+  async softDeleteUser(id: string): Promise<void> {
+    await prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
   }
 
   /**
