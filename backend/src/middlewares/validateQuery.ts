@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { DEFAULT_QUERY_PARAMS } from '../config/query';
+import { ExtendedRequest } from '@/types/express';
 
 /**
  * Base validated query params
@@ -16,7 +17,7 @@ export interface BaseValidatedQuery {
 /**
  * Extended Request with validated query params
  */
-export interface RequestWithValidatedQuery extends Request {
+export interface RequestWithValidatedQuery extends ExtendedRequest {
   validatedQuery: BaseValidatedQuery;
 }
 

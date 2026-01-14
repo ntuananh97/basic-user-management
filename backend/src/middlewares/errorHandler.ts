@@ -88,10 +88,10 @@ export const errorHandler = (
  * Async handler wrapper to catch errors in async route handlers
  * Usage: asyncHandler(async (req, res) => { ... })
  */
-export const asyncHandler = (
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void | Response>
+export const asyncHandler = <T extends Request = Request>(
+  fn: (req: T, res: Response, next: NextFunction) => Promise<void | Response>
 ) => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req as T, res, next)).catch(next);
   };
 };

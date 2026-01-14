@@ -1,8 +1,9 @@
 import { prisma } from '../config/database';
-import { CreateUserInput, UpdateUserInput, UpdateUserProfileInput, ChangePasswordInput, ChangeStatusInput, IGetAllUsersParams, IPaginatedResponse, IUserWithoutPassword } from '../types/user.types';
+import { CreateUserInput, UpdateUserInput, UpdateUserProfileInput, ChangePasswordInput, ChangeStatusInput, IUserWithoutPassword } from '../types/user.types';
 import { NotFoundError, ConflictError, ValidationError } from '../types/errors';
 import { User } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { IPaginatedParams, IPaginatedResponse } from '@/types/common';
 
 /**
  * User Service Layer
@@ -13,7 +14,7 @@ export class UserService {
    * Get all users from database with pagination and sorting
    * @param params - Query parameters (validated by middleware)
    */
-  async getAllUsers(params: Required<IGetAllUsersParams>): Promise<IPaginatedResponse<IUserWithoutPassword>> {
+  async getAllUsers(params: Required<IPaginatedParams>): Promise<IPaginatedResponse<IUserWithoutPassword>> {
     const { page, limit, sort, sortOrder } = params;
 
     // Calculate skip for pagination

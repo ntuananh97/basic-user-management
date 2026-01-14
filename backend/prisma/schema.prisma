@@ -34,6 +34,39 @@ model User {
   deletedAt DateTime?  @map("deleted_at")
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-
+  projects  Project[]
+  tasks     Task[]
   @@map("users")
 }
+
+model Project {
+  id          String     @id @default(uuid())
+  title       String     
+  description String?
+  ownerId     String     @map("owner_id")
+  owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  tasks       Task[]
+
+  @@map("projects")
+  @@index([ownerId, createdAt])
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String     
+  description String?
+  status      String
+  projectId   String     @map("project_id")
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assigneeId   String     @map("assignee_id")
+  assignee     User       @relation(fields: [assigneeId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@map("tasks")
+  @@index([projectId, status])
+  @@index([projectId, assigneeId])
+}
+

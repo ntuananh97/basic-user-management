@@ -77,22 +77,5 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>['body'];
 export type ChangeStatusInput = z.infer<typeof changeStatusSchema>['body'];
 export type UserIdParam = z.infer<typeof userIdSchema>['params'];
 
-export interface IGetAllUsersParams {
-  page?: number;
-  limit?: number;
-  sort?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-export interface IPaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
 export interface IUserWithoutPassword  extends Omit<User, 'password' > {}
 
